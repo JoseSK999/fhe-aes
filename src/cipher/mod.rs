@@ -8,7 +8,7 @@ struct AesState([RadixCiphertext; 16]);
 
 impl AesState {
     /// Applies the S-box substitution to every byte in the state in parallel.
-    pub fn sub_bytes(&self, sk: &ServerKey) -> Self {
+    fn sub_bytes(&self, sk: &ServerKey) -> Self {
         let new_state: [RadixCiphertext; 16] = self.0
             .par_iter()
             .map(|enc_byte| sub_byte(sk, enc_byte))
@@ -22,7 +22,7 @@ impl AesState {
     /// In column‑major order, ShiftRows maps the indices as follows:
     /// [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] →
     /// [0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12, 1, 6, 11]
-    pub fn shift_rows(self) -> Self {
+    fn shift_rows(self) -> Self {
         // Destructure the inner array (consuming self)
         let [s0, s1, s2, s3,
         s4, s5, s6, s7,
@@ -46,7 +46,7 @@ impl AesState {
     ///   new3 = (03 • s0) ⊕ s1 ⊕ s2 ⊕ (02 • s3)
     ///
     /// The multiplication is over GF(2⁸) using the AES irreducible polynomial.
-    pub fn mix_columns(&self, sk: &ServerKey) -> Self {
+    fn mix_columns(&self, sk: &ServerKey) -> Self {
         // Process each column by extracting 4 consecutive ciphertexts,
         // applying mix_single_column, and then reassembling the state.
         let new_columns: Vec<[RadixCiphertext; 4]> = (0..4)
@@ -67,7 +67,7 @@ impl AesState {
         AesState(new_state)
     }
 
-    pub fn add_round_key(&self, round_key: &[RadixCiphertext; 16], sk: &ServerKey) -> Self {
+    fn add_round_key(&self, round_key: &[RadixCiphertext; 16], sk: &ServerKey) -> Self {
         // Perform byte-by-byte XOR in parallel between self and the round_key.
         let new_state: [RadixCiphertext; 16] = self.0
             .par_iter()

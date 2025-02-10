@@ -6,11 +6,11 @@ use tfhe::MatchValues;
 
 /// Each word is 4 bytes long
 #[derive(Clone)]
-pub struct FheWord([RadixCiphertext; 4]);
+struct FheWord([RadixCiphertext; 4]);
 
 /// Converts a [RadixCiphertext; 16] into a [FheWord; 4] by grouping every 4 elements,
 /// assumed to be encrypted bytes.
-pub fn to_fhe_words(bytes: [RadixCiphertext; 16]) -> [FheWord; 4] {
+fn to_fhe_words(bytes: [RadixCiphertext; 16]) -> [FheWord; 4] {
     let mut iter = bytes.into_iter();
     array::from_fn(|_| {
         FheWord(array::from_fn(|_| iter.next().unwrap()))
@@ -18,7 +18,7 @@ pub fn to_fhe_words(bytes: [RadixCiphertext; 16]) -> [FheWord; 4] {
 }
 
 /// Flattens a [FheWord; 4] into a [RadixCiphertext; 16] by concatenating the inner arrays.
-pub fn from_fhe_words(words: [FheWord; 4]) -> [RadixCiphertext; 16] {
+fn from_fhe_words(words: [FheWord; 4]) -> [RadixCiphertext; 16] {
     let mut iter = words
         .into_iter()
         .flat_map(|w| w.0.into_iter());
@@ -30,7 +30,7 @@ impl FheWord {
     /// Rotates the FheWord left by one byte.
     ///
     /// For example, if the word is [a, b, c, d], the result will be [b, c, d, a].
-    pub fn rot_word(&self) -> Self {
+    fn rot_word(&self) -> Self {
         let mut arr = self.0.clone();
         arr.rotate_left(1);
         Self(arr)
@@ -38,7 +38,7 @@ impl FheWord {
 
     /// Applies the AES S-box to each encrypted byte of an FheWord in parallel. For the first
     /// byte it applies the XOR with the Round Constant as well 'for free'.
-    pub fn sub_word(&self, s_box_xor_rcon: [u8; 256], sk: &ServerKey) -> Self {
+    fn sub_word(&self, s_box_xor_rcon: [u8; 256], sk: &ServerKey) -> Self {
         let new_bytes: [RadixCiphertext; 4] = self.0
             .par_iter()
             .enumerate()
@@ -60,7 +60,7 @@ impl FheWord {
     }
 
     /// Bitwise XORs two FheWords in parallel.
-    pub fn bitxor(&self, other: &Self, sk: &ServerKey) -> Self {
+    fn bitxor(&self, other: &Self, sk: &ServerKey) -> Self {
         let new_bytes: [RadixCiphertext; 4] = self.0
             .par_iter()
             .zip(other.0.par_iter())

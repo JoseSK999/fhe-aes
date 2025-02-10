@@ -4,7 +4,6 @@ use clap::Parser;
 use std::time::Instant;
 use aes::Aes128;
 use aes::cipher::{KeyInit, BlockEncrypt, generic_array::GenericArray};
-use std::convert::TryInto;
 #[cfg(feature = "rand_args")]
 use rand::Rng;
 #[cfg(feature = "parallel_aes")]
@@ -128,6 +127,8 @@ fn parse_args() -> (usize, [u8; 16], [u8; 16]) {
 
     rng.fill(&mut key_bytes);
     rng.fill(&mut iv_bytes);
+
+    println!("Random key: {:?}\nRandom IV: {:?}", key_bytes, iv_bytes);
 
     (n, key_bytes, iv_bytes)
 }
