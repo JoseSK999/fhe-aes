@@ -12,5 +12,8 @@ rand = { version = "0.9.0", optional = true }
 hex = "0.4.3"
 
 [features]
+default = ["parallel_aes"]
 # Generate the key and IV values randomly in the binary. Toggles off the Command Line parser.
 rand_args = ["dep:rand"]
+# Run the FHE AES encryption in parallel for each plaintext.
+parallel_aes = []

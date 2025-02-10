@@ -1,6 +1,6 @@
 use crate::{sub_byte, FheRoundKey};
 use rayon::prelude::*;
-use tfhe::integer::{BooleanBlock, ClientKey, IntegerCiphertext};
+use tfhe::integer::{BooleanBlock, IntegerCiphertext};
 use tfhe::integer::{RadixCiphertext, ServerKey};
 use tfhe::integer::prelude::ServerKeyDefaultCMux;
 

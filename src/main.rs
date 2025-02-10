@@ -7,6 +7,8 @@ use aes::cipher::{KeyInit, BlockEncrypt, generic_array::GenericArray};
 use std::convert::TryInto;
 #[cfg(feature = "rand_args")]
 use rand::Rng;
+#[cfg(feature = "parallel_aes")]
+use rayon::prelude::*;
 use tfhe::integer::{ClientKey, ServerKey};
 use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2;
 
@@ -24,6 +26,19 @@ struct Args {
     /// AES-128 key as a 32-character hex string (16 bytes).
     #[arg(long)]
     key: String,
+}
+
+#[cfg(feature = "parallel_aes")]
+macro_rules! iter_range {
+    ($range:expr) => {
+        $range.into_par_iter()
+    };
+}
+#[cfg(not(feature = "parallel_aes"))]
+macro_rules! iter_range {
+    ($range:expr) => {
+        $range.into_iter()
+    };
 }
 
 fn main() {
@@ -61,15 +76,13 @@ fn main() {
     // FHE AES-128 Encryption/Decryption (Counter Mode)
     // ----------------------------
     let start_aes = Instant::now();
-    let mut fhe_ciphertexts = Vec::with_capacity(n);
-
-    for i in 0..n {
-        let plaintext = iv_u128.wrapping_add(i as u128).to_be_bytes();
-        let fhe_plaintext = encrypt_block(&ck, &plaintext);
-
-        let fhe_ct = fhe_aes_encrypt(&sk, fhe_plaintext, &fhe_round_keys);
-        fhe_ciphertexts.push(fhe_ct);
-    }
+    let fhe_ciphertexts: Vec<_> = iter_range!(0..n)
+        .map(|i| {
+            let plaintext = iv_u128.wrapping_add(i as u128).to_be_bytes();
+            let fhe_plaintext = encrypt_block(&ck, &plaintext);
+            fhe_aes_encrypt(&sk, fhe_plaintext, &fhe_round_keys)
+        })
+        .collect();
     let elapsed = start_aes.elapsed();
 
     // Compare each FHE ciphertext (after decryption) with the cleartext AES ciphertext.
